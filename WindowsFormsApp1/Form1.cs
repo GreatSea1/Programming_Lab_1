@@ -11,6 +11,7 @@ using org.mariuszgromada.math.mxparser;
 using org.mariuszgromada.math.mxparser.mathcollection;
 using org.mariuszgromada.math.mxparser.parsertokens;
 using org.mariuszgromada.math.mxparser.syntaxchecker;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace WindowsFormsApp1 {
     public partial class Form1 : Form {
@@ -19,44 +20,122 @@ namespace WindowsFormsApp1 {
         }
 
         private void button1_Click(object sender, EventArgs e) {
+            if (tbInput.Text == string.Empty || tbRightBorder.Text == string.Empty) {
+                MessageBox.Show("Пожалуйста, введите данные");
+                return;
+            }
             DrawChart();
             DrawDichotomy();
         }
 
         #region Нахождение дихотомии
-        private double eps = 0.001;
-        private double dichotomyLeftBorder = 0;
+
+
+        private double eps;
+        private double dichotomyLeftBorder;
         private double dicphotomyRightBorder;
+        private bool found;
+        private int Attempts;
         
         private double Dichotomy() {
-            double dichotomyPoint;
-            dicphotomyRightBorder = Convert.ToDouble(tbRightBorder.Text);
+            eps = 0.01;
 
-            do {
-                dichotomyPoint = ( dichotomyLeftBorder + dicphotomyRightBorder ) / 2.0;
+            double dichotomyPoint = 0;
+            dichotomyLeftBorder = 0;
+            dicphotomyRightBorder = 2;
+            found = false;
+            Attempts = 0;
 
-                if(parseMath(dichotomyLeftBorder) * parseMath(dichotomyPoint) < 0) {
-                    dicphotomyRightBorder = dichotomyPoint;
+            //из минуса в плюс
+            while (!found) {
+
+                do {
+                    dichotomyPoint = ( dichotomyLeftBorder + dicphotomyRightBorder ) / 2;
+                    if(parseDerivate(dichotomyLeftBorder) * parseDerivate(dichotomyPoint) < 0) {
+                        dicphotomyRightBorder = dichotomyPoint;
+                    } else if(parseDerivate(dichotomyLeftBorder) * parseDerivate(dichotomyPoint) > 0) {
+                        dichotomyLeftBorder = dichotomyPoint;
+                    } else {
+                        dicphotomyRightBorder++;
+                        dichotomyLeftBorder++;
+                        Attempts++;
+                        break;
+                    }
+                } while (Math.Abs(dicphotomyRightBorder - dichotomyLeftBorder) > eps * 2);
+
+                if(parseMath(dichotomyPoint) <= 0 && parseDerivate(dichotomyPoint - eps * 100) <= 0 && parseDerivate(dichotomyPoint + eps * 100) >= 0) {
+                    found = true;
                 }
-                else if (parseMath(dicphotomyRightBorder) * parseMath(dichotomyPoint) < 0) {
-                    dichotomyLeftBorder = dichotomyPoint;
-                } else {
-                    MessageBox.Show("Точка дихотомии не найдена");
+                else if(Attempts > 300) {
+                    MessageBox.Show("Не найдено");
                     return 0;
                 }
-            } while (Math.Abs(dicphotomyRightBorder - dichotomyLeftBorder) > eps);
+                dicphotomyRightBorder++;
+                dichotomyLeftBorder++;
 
+                #region мусор но нужный
+                //do {
+                //    dichotomyPoint = ( dichotomyLeftBorder + dicphotomyRightBorder ) / 2.0;
+
+                //    if (parseMath(dichotomyLeftBorder) > parseMath(dichotomyPoint)) {
+                //        dicphotomyRightBorder = dichotomyPoint;
+                //    } else if (parseMath(dicphotomyRightBorder) * parseMath(dichotomyPoint) < 0 ){
+                //        dichotomyLeftBorder = dichotomyPoint;
+                //    } else {
+                //        dicphotomyRightBorder++;
+                //        Attempts++;
+                //        break;
+                //    }
+                //} while (Math.Abs(dicphotomyRightBorder - dichotomyLeftBorder) > eps * 2);
+
+                //if(parseMath(x1) >= parseMath((a + b) / 2) && parseMath(x2) >= parseMath((a + b) / 2)) {
+                //    found = true;
+                //}
+                //else if(Attempts > 550) {
+                //    return 0;
+                //}
+                #endregion
+            }
+            #region тот же мусор
+            //while (!found) {
+            //    do {
+            //        dichotomyPoint = ( dichotomyLeftBorder + dicphotomyRightBorder ) / 2.0;
+
+            //        if (parseMath(dichotomyLeftBorder) * parseMath(dichotomyPoint) < 0) {
+            //            dicphotomyRightBorder = dichotomyPoint;
+            //        } else if (parseMath(dicphotomyRightBorder) * parseMath(dichotomyPoint) < 0 ){
+            //            dichotomyLeftBorder = dichotomyPoint;
+            //        } else {
+            //            dicphotomyRightBorder++;
+            //            Attempts++;
+            //            break;
+            //        }
+            //    } while (Math.Abs(dicphotomyRightBorder - dichotomyLeftBorder) > eps);
+
+            //    if(parseMath(dichotomyPoint) >= eps * -100 && parseMath(dichotomyPoint)  <=  eps * 100) {
+            //        found = true;
+            //    }
+            //    else if(Attempts > 550) {
+            //        return 0;
+            //    }
+            //}
+            #endregion да
             return dichotomyPoint;
         }
         #endregion
 
         #region Отрисовывание дихотомии
         private void DrawDichotomy() {
-            double dichotomyPointX = Dichotomy();
+            //double dichotomyPointX = Dichotomy();
+            List<double> dichotomyPointX = new List<double>();
+            dichotomyPointX.Add(Dichotomy());
+
             this.chart1.Series[1].Points.Clear();
             for (int i = -4; i < 5; i++) {
-                this.chart1.Series[1].Points.AddXY(dichotomyPointX, i);
+                this.chart1.Series[1].Points.AddXY(dichotomyPointX[0], i);
             }
+            MessageBox.Show($"Точка окупа: {dichotomyPointX[0]}");
+            dichotomyPointX.Clear();
         }
         #endregion
 
@@ -92,12 +171,20 @@ namespace WindowsFormsApp1 {
         }
         #endregion
 
-        private void tbRightBorder_KeyPress(object sender, KeyPressEventArgs e) {
-            char number = e.KeyChar;
+        #region Производная вычислять
+        private double parseDerivate(double point) {
+            Argument x = new Argument("x");
+            x.setArgumentValue(point);
+            string formula = tbInput.Text.ToString();
+            string derivateFormula = "der(" + formula + ",x)";
+            Expression expression = new Expression(derivateFormula, x);
+            return expression.calculate();
+        }
 
-            if (!Char.IsDigit(number)) {
-                e.Handled = true;
-            }
+        #endregion
+
+        private void tbRightBorder_KeyPress(object sender, KeyPressEventArgs e) {
+            CheckInput.OnlyDigit(sender, e);
         }
 
         private void вычислитьToolStripMenuItem_Click(object sender, EventArgs e) {
@@ -107,6 +194,7 @@ namespace WindowsFormsApp1 {
         private void очиститьToolStripMenuItem_Click(object sender, EventArgs e) {
             tbInput.Text = null;
             tbRightBorder.Text = null;
+            this.chart1.Series[0].Points.Clear();
         }
     }
 }
