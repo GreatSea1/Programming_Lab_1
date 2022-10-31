@@ -14,6 +14,7 @@ using org.mariuszgromada.math.mxparser.syntaxchecker;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace WindowsFormsApp1 {
+
     public partial class Form1 : Form {
         public Form1() {
             InitializeComponent();
@@ -24,6 +25,9 @@ namespace WindowsFormsApp1 {
                 MessageBox.Show("Пожалуйста, введите данные");
                 return;
             }
+            chart1.ChartAreas[0].AxisX.Minimum = Convert.ToInt32(tbLeftBorder.Text);
+            chart1.ChartAreas[0].AxisX.Maximum = Convert.ToInt32(tbRightBorder.Text);
+            
             DrawChart();
             DrawDichotomy();
         }
@@ -34,120 +38,114 @@ namespace WindowsFormsApp1 {
         private double eps;
         private double dichotomyLeftBorder;
         private double dicphotomyRightBorder;
-        private bool found;
-        private int Attempts;
-        
+        private bool isInfinity = false;
+
         private double Dichotomy() {
             eps = 0.01;
 
             double dichotomyPoint = 0;
-            dichotomyLeftBorder = 0;
-            dicphotomyRightBorder = 2;
-            found = false;
-            Attempts = 0;
+            double diffDichotomy = 0;
+            dichotomyLeftBorder = Convert.ToDouble(tbLeftBorder.Text);
+            dicphotomyRightBorder = Convert.ToDouble(tbRightBorder.Text);
+            double a = 0;
+            double b = 0;
 
-            //из минуса в плюс
-            while (!found) {
+            do {
+                dichotomyPoint = ( dichotomyLeftBorder + dicphotomyRightBorder ) / 2;
+                diffDichotomy = parseDerivate(dichotomyPoint);
+                a = parseDerivate(dichotomyLeftBorder);
+                b = parseDerivate(dicphotomyRightBorder);
 
-                do {
-                    dichotomyPoint = ( dichotomyLeftBorder + dicphotomyRightBorder ) / 2;
-                    if(parseDerivate(dichotomyLeftBorder) * parseDerivate(dichotomyPoint) < 0) {
-                        dicphotomyRightBorder = dichotomyPoint;
-                    } else if(parseDerivate(dichotomyLeftBorder) * parseDerivate(dichotomyPoint) > 0) {
-                        dichotomyLeftBorder = dichotomyPoint;
-                    } else {
-                        dicphotomyRightBorder++;
-                        dichotomyLeftBorder++;
-                        Attempts++;
-                        break;
+                if (b <= -200) {
+                    isInfinity = true;
+                    return dicphotomyRightBorder;
+                }
+
+                for (double index = dichotomyLeftBorder; index < dichotomyLeftBorder + 2; index += 0.1) {
+                    if (parseDerivate(index) <= -200) {
+                        isInfinity = true;
+                        return index;
                     }
-                } while (Math.Abs(dicphotomyRightBorder - dichotomyLeftBorder) > eps * 2);
-
-                if(parseMath(dichotomyPoint) <= 0 && parseDerivate(dichotomyPoint - eps * 100) <= 0 && parseDerivate(dichotomyPoint + eps * 100) >= 0) {
-                    found = true;
                 }
-                else if(Attempts > 300) {
-                    MessageBox.Show("Не найдено");
-                    return 0;
+
+                if (a * diffDichotomy < 0) {
+                    dicphotomyRightBorder = dichotomyPoint;
+                } else if (a * diffDichotomy > 0) {
+                    dichotomyLeftBorder = dichotomyPoint;
+                } else {
+                    dichotomyLeftBorder++;
                 }
-                dicphotomyRightBorder++;
-                dichotomyLeftBorder++;
+            } while (Math.Abs(dicphotomyRightBorder - dichotomyLeftBorder) > eps);
+            return dichotomyPoint;
+        }
+        private double maxDichotomy() {
+            eps = 0.01;
 
-                #region мусор но нужный
-                //do {
-                //    dichotomyPoint = ( dichotomyLeftBorder + dicphotomyRightBorder ) / 2.0;
+            double dichotomyPoint = 0;
+            double diffDichotomy = 0;
+            dichotomyLeftBorder = Convert.ToDouble(tbLeftBorder.Text);
+            dicphotomyRightBorder = Convert.ToDouble(tbRightBorder.Text);
+            double a = 0;
+            double b = 0;
 
-                //    if (parseMath(dichotomyLeftBorder) > parseMath(dichotomyPoint)) {
-                //        dicphotomyRightBorder = dichotomyPoint;
-                //    } else if (parseMath(dicphotomyRightBorder) * parseMath(dichotomyPoint) < 0 ){
-                //        dichotomyLeftBorder = dichotomyPoint;
-                //    } else {
-                //        dicphotomyRightBorder++;
-                //        Attempts++;
-                //        break;
-                //    }
-                //} while (Math.Abs(dicphotomyRightBorder - dichotomyLeftBorder) > eps * 2);
+            do {
+                dichotomyPoint = ( dichotomyLeftBorder + dicphotomyRightBorder ) / 2;
+                diffDichotomy = parseDerivate(dichotomyPoint);
+                a = parseDerivate(dichotomyLeftBorder);
+                b = parseDerivate(dicphotomyRightBorder);
 
-                //if(parseMath(x1) >= parseMath((a + b) / 2) && parseMath(x2) >= parseMath((a + b) / 2)) {
-                //    found = true;
-                //}
-                //else if(Attempts > 550) {
-                //    return 0;
-                //}
-                #endregion
-            }
-            #region тот же мусор
-            //while (!found) {
-            //    do {
-            //        dichotomyPoint = ( dichotomyLeftBorder + dicphotomyRightBorder ) / 2.0;
+                if (b >= 200) {
+                    return dicphotomyRightBorder;
+                }
 
-            //        if (parseMath(dichotomyLeftBorder) * parseMath(dichotomyPoint) < 0) {
-            //            dicphotomyRightBorder = dichotomyPoint;
-            //        } else if (parseMath(dicphotomyRightBorder) * parseMath(dichotomyPoint) < 0 ){
-            //            dichotomyLeftBorder = dichotomyPoint;
-            //        } else {
-            //            dicphotomyRightBorder++;
-            //            Attempts++;
-            //            break;
-            //        }
-            //    } while (Math.Abs(dicphotomyRightBorder - dichotomyLeftBorder) > eps);
+                for (double index = dichotomyLeftBorder; index < dichotomyLeftBorder + 2; index += 0.1) {
+                    if (parseDerivate(index) >= 200) {
+                        return index;
+                    }
+                }
 
-            //    if(parseMath(dichotomyPoint) >= eps * -100 && parseMath(dichotomyPoint)  <=  eps * 100) {
-            //        found = true;
-            //    }
-            //    else if(Attempts > 550) {
-            //        return 0;
-            //    }
-            //}
-            #endregion да
+                if (b * diffDichotomy < 0) {
+                    dichotomyLeftBorder = dichotomyPoint;
+                } else if (b * diffDichotomy > 0) {
+                    dicphotomyRightBorder = dichotomyPoint;
+                } else {
+                    dichotomyLeftBorder++;
+                }
+            } while (Math.Abs(dicphotomyRightBorder - dichotomyLeftBorder) > eps);
             return dichotomyPoint;
         }
         #endregion
 
         #region Отрисовывание дихотомии
         private void DrawDichotomy() {
-            //double dichotomyPointX = Dichotomy();
             List<double> dichotomyPointX = new List<double>();
             dichotomyPointX.Add(Dichotomy());
+            double axisYMin = parseMath(dichotomyPointX[0]);
+            double axisYMax = parseMath(maxDichotomy());
+
+            this.chart1.ChartAreas[0].AxisY.Minimum = axisYMin;
+            this.chart1.ChartAreas[0].AxisY.Maximum = axisYMax;
+            //Найти y дихотомии
 
             this.chart1.Series[1].Points.Clear();
-            for (int i = -4; i < 5; i++) {
-                this.chart1.Series[1].Points.AddXY(dichotomyPointX[0], i);
-            }
-            MessageBox.Show($"Точка окупа: {dichotomyPointX[0]}");
+            this.chart1.Series[1].Points.AddXY(dichotomyPointX[0], axisYMin);
+            
+            if (isInfinity){ MessageBox.Show($"В точке:{dichotomyPointX[0]} стремится к бесконечности"); } else
+                { MessageBox.Show($"Точка окупа: {dichotomyPointX[0]}"); }
             dichotomyPointX.Clear();
         }
         #endregion
 
         #region построение графика
 
-        private double leftBorder = 0;
+        private double leftBorder;
         private double rightBorder;
         private double step = 0.1;
         private double x;
         private double y = 0;
 
         private void DrawChart() {
+            leftBorder = Convert.ToDouble(tbLeftBorder.Text);
             rightBorder = Convert.ToDouble(tbRightBorder.Text);//Правая граница
             x = leftBorder;
 
@@ -180,7 +178,7 @@ namespace WindowsFormsApp1 {
             Expression expression = new Expression(derivateFormula, x);
             return expression.calculate();
         }
-
+        
         #endregion
 
         private void tbRightBorder_KeyPress(object sender, KeyPressEventArgs e) {
